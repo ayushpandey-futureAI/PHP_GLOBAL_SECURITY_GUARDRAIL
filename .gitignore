@@ -1,0 +1,15 @@
+# Logs & Temporary Files
+logs/
+*.log
+/tmp/
+*.swp
+*~
+.DS_Store
+
+# Test Artifacts
+__pycache__/
+*.pyc
+
+# Environment Files
+.env
+.env.local
