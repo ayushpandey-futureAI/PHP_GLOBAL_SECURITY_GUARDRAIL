@@ -4,7 +4,7 @@ PHP Global Security Guardrail - Continuous Synchronizer & Cloud Mirror
 ======================================================================
 Synchronizes code, documentation, sprint logs, and research between:
 - Local Workspace: /home/ayush-pandey/PHP_GLOBAL_SECURITY_GUARDRAIL
-- Google Drive Cloud Mirror: /home/ayush-pandey/GoogleDrive/PHP_Global_Security_Guardrail
+- Google Drive Remote: gdrive:PHP_Global_Security_Guardrail
 - Remote GitHub Repository: ayushpandey-futureAI/PHP_GLOBAL_SECURITY_GUARDRAIL
 
 Usage:
@@ -15,62 +15,42 @@ Usage:
 import os
 import sys
 import time
-import shutil
 import argparse
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
 LOCAL_ROOT = Path("/home/ayush-pandey/PHP_GLOBAL_SECURITY_GUARDRAIL")
-GDRIVE_ROOT = Path("/home/ayush-pandey/GoogleDrive/PHP_Global_Security_Guardrail")
-LOGS_DIR = LOCAL_ROOT / "logs"
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
-
-SYNC_FILES = [
-    "AGENT.md",
-    "JIRA_SPRINTS.md",
-    "PROJECT_MEMORY.md",
-    "CONVERSATION_LOGS.md",
-    "README.md",
-    ".gitignore"
-]
-
-SYNC_DIRS = [
-    "src",
-    "scripts",
-    "tests",
-    "docs"
-]
+RCLONE_BIN = Path("/home/ayush-pandey/.local/bin/rclone")
+GDRIVE_REMOTE = "gdrive:PHP_Global_Security_Guardrail"
 
 def sync_to_gdrive():
-    """Syncs local files to the Google Drive mount."""
+    """Syncs local files to Google Drive using direct rclone binary."""
     now_str = datetime.now(timezone.utc).isoformat()
-    print(f"[{now_str}] Syncing files to Google Drive ({GDRIVE_ROOT})...")
+    print(f"[{now_str}] Syncing files to Google Drive ({GDRIVE_REMOTE})...")
     
-    if not GDRIVE_ROOT.exists():
-        print(f"[!] Warning: Google Drive path {GDRIVE_ROOT} does not exist or is not mounted.")
+    if not RCLONE_BIN.exists():
+        print(f"[!] Error: rclone binary not found at {RCLONE_BIN}")
         return False
 
-    # Sync individual files
-    for fname in SYNC_FILES:
-        src = LOCAL_ROOT / fname
-        dst = GDRIVE_ROOT / fname
-        if src.exists():
-            shutil.copy2(src, dst)
-            print(f"  -> Synced file: {fname}")
+    cmd = [
+        str(RCLONE_BIN),
+        "copy",
+        str(LOCAL_ROOT),
+        GDRIVE_REMOTE,
+        "--exclude", ".git/**",
+        "--update",
+        "--transfers", "4",
+        "-v"
+    ]
 
-    # Sync directories
-    for dname in SYNC_DIRS:
-        src_dir = LOCAL_ROOT / dname
-        dst_dir = GDRIVE_ROOT / dname
-        if src_dir.exists():
-            if dst_dir.exists():
-                shutil.rmtree(dst_dir)
-            shutil.copytree(src_dir, dst_dir)
-            print(f"  -> Synced directory: {dname}/")
-
-    print("[+] Google Drive sync complete.")
-    return True
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print("[+] Google Drive sync complete via rclone.")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"[!] rclone error: {e.stderr}")
+        return False
 
 def sync_to_github(auto_push=True):
     """Commits and pushes changes to GitHub using Git CLI."""
@@ -78,16 +58,13 @@ def sync_to_github(auto_push=True):
     print(f"[{now_str}] Checking Git status and pushing to GitHub...")
     
     try:
-        # Check if git is initialized
         if not (LOCAL_ROOT / ".git").exists():
             print("[!] Git not initialized in local root.")
             return False
 
-        # Add all files
         subprocess.run(["git", "add", "."], cwd=LOCAL_ROOT, check=True)
-        
-        # Check if there are changes to commit
         status = subprocess.run(["git", "status", "--porcelain"], cwd=LOCAL_ROOT, capture_output=True, text=True, check=True)
+        
         if status.stdout.strip():
             commit_msg = f"feat(guardrail): automated sync & security update [{now_str}]"
             subprocess.run(["git", "commit", "-m", commit_msg], cwd=LOCAL_ROOT, check=True)
@@ -100,7 +77,7 @@ def sync_to_github(auto_push=True):
             if push_res.returncode == 0:
                 print("  -> Successfully pushed to GitHub origin/main.")
             else:
-                print(f"  -> Git push warning/notice: {push_res.stderr.strip()}")
+                print(f"  -> Git push notice: {push_res.stderr.strip()}")
                 
         return True
     except Exception as e:
