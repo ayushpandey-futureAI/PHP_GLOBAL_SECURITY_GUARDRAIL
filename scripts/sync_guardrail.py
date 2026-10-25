@@ -39,6 +39,8 @@ def sync_to_gdrive():
         str(LOCAL_ROOT),
         GDRIVE_REMOTE,
         "--exclude", ".git/**",
+        "--exclude", "__pycache__/**",
+        "--exclude", "*.pyc",
         "--update",
         "--transfers", "4",
         "-v"

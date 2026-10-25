@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PHP Threat Model & Vulnerability Signature Schema",
+  "description": "Standardized schema for modeling, scoring, and neutralizing PHP exploitation patterns across legacy and modern ecosystems.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "last_updated",
+    "threat_taxonomy",
+    "signatures"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "threat_taxonomy": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "CGI_ARGUMENT_INJECTION",
+          "PHP_OBJECT_INJECTION",
+          "STREAM_WRAPPER_EXPLOITATION",
+          "PATH_TRAVERSAL_AND_POISONING",
+          "COMMAND_INJECTION_AND_CHAINING",
+          "SQL_INJECTION",
+          "WEB_SHELL_UPLOAD_AND_PERSISTENCE",
+          "SERVER_SIDE_REQUEST_FORGERY",
+          "TYPE_JUGGLING_AND_LOGIC_BYPASS"
+        ]
+      }
+    },
+    "signatures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "cwe_id",
+          "cvss_v4_score",
+          "epss_percentile",
+          "target_surfaces",
+          "detection",
+          "action",
+          "test_cases"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^THREAT-PHP-[A-Z0-9-]+$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "cve_references": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^CVE-\\d{4}-\\d+$"
+            }
+          },
+          "cwe_id": {
+            "type": "string",
+            "pattern": "^CWE-\\d+$"
+          },
+          "cvss_v4_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 10.0
+          },
+          "epss_percentile": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "target_surfaces": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "QUERY_STRING",
+                "GET_PARAM",
+                "POST_PARAM",
+                "COOKIE",
+                "HTTP_HEADER",
+                "REQUEST_URI",
+                "FILE_UPLOAD_NAME",
+                "FILE_UPLOAD_CONTENT"
+              ]
+            }
+          },
+          "obfuscation_countermeasures": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "URL_DECODE_RECURSIVE",
+                "BASE64_DECODE_INSPECTION",
+                "NULL_BYTE_STRIP",
+                "BEST_FIT_UNICODE_NORMALIZATION",
+                "CASE_INSENSITIVE_FOLDING"
+              ]
+            }
+          },
+          "detection": {
+            "type": "object",
+            "required": [
+              "type",
+              "pattern"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "REGEX",
+                  "STRING_EXACT",
+                  "HEURISTIC",
+                  "AST_TOKEN_SCAN"
+                ]
+              },
+              "pattern": {
+                "type": "string"
+              },
+              "pre_filter": {
+                "type": "string"
+              }
+            }
+          },
+          "action": {
+            "type": "object",
+            "required": [
+              "enforce_action",
+              "http_status_code"
+            ],
+            "properties": {
+              "enforce_action": {
+                "type": "string",
+                "enum": [
+                  "BLOCK_TERMINATE",
+                  "SANITIZE_INPUT",
+                  "STRIP_FILE_PERMISSIONS",
+                  "ALERT_ONLY"
+                ]
+              },
+              "http_status_code": {
+                "type": "integer",
+                "enum": [
+                  400,
+                  403,
+                  404,
+                  500
+                ]
+              },
+              "remediation_hint": {
+                "type": "string"
+              }
+            }
+          },
+          "test_cases": {
+            "type": "object",
+            "required": [
+              "malicious_samples",
+              "benign_samples"
+            ],
+            "properties": {
+              "malicious_samples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "benign_samples": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
