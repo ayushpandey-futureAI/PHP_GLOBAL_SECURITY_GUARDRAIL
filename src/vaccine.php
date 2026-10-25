@@ -29,11 +29,13 @@ if (isset($_SERVER['REQUEST_URI'])) {
 // 3. INITIALIZE VACCINE STATE & GLOBAL POLICIES
 if (!defined('PHP_VACCINE_LOADED')) {
     define('PHP_VACCINE_LOADED', true);
-    define('PHP_VACCINE_VERSION', '1.2.0-ENTERPRISE');
+    define('PHP_VACCINE_VERSION', '1.3.0-ENTERPRISE');
 
     $GLOBALS['__VACCINE_START_TIME'] = microtime(true);
     $GLOBALS['__VACCINE_MODE'] = getenv('VACCINE_MODE') ?: 'ENFORCE'; // 'ENFORCE' or 'AUDIT'
     $GLOBALS['__VACCINE_LOGFILE'] = getenv('VACCINE_LOGFILE') ?: '/var/log/php-vaccine.log';
+    $GLOBALS['__VACCINE_LOG_FORMAT'] = strtoupper(getenv('VACCINE_LOG_FORMAT') ?: 'TEXT'); // 'TEXT', 'JSON', 'CEF'
+    $GLOBALS['__VACCINE_SYSLOG'] = getenv('VACCINE_SYSLOG') ? true : false;
 
     // Automatically load legacy MySQL compatibility shim if native extension is missing
     $shim_path = __DIR__ . '/shims/mysql_shim.php';
@@ -43,7 +45,7 @@ if (!defined('PHP_VACCINE_LOADED')) {
 }
 
 /**
- * Audit Logger & Threat Incident Dispatcher
+ * Audit Logger & Threat Incident Dispatcher (Multi-Format SIEM Emitter)
  */
 function _vaccine_log_threat($threat_id, $category, $detail, $matched_payload) {
     $ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
@@ -51,19 +53,58 @@ function _vaccine_log_threat($threat_id, $category, $detail, $matched_payload) {
     $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'UNKNOWN';
     $timestamp = date('c');
     $overhead_ms = round((microtime(true) - $GLOBALS['__VACCINE_START_TIME']) * 1000, 3);
+    $payload_str = is_string($matched_payload) ? $matched_payload : json_encode($matched_payload);
+    $payload_sample = substr($payload_str, 0, 400);
 
-    $log_entry = sprintf(
-        "[%s] [THREAT_INTERCEPTED] ID: %s | CAT: %s | IP: %s | METHOD: %s | URI: %s | LATENCY: %sms | DETAIL: %s | PAYLOAD: %s\n",
-        $timestamp,
-        $threat_id,
-        $category,
-        $ip,
-        $method,
-        $uri,
-        $overhead_ms,
-        $detail,
-        substr(json_encode($matched_payload), 0, 400)
-    );
+    $format = isset($GLOBALS['__VACCINE_LOG_FORMAT']) ? $GLOBALS['__VACCINE_LOG_FORMAT'] : 'TEXT';
+
+    if ($format === 'CEF') {
+        // ArcSight Common Event Format
+        $log_entry = sprintf(
+            "CEF:0|PHP-Universal-Vaccine|RASP|1.3.0|%s|%s|8|src=%s requestMethod=%s request=%s cs1=%s cs1Label=Category cn1=%s cn1Label=LatencyMs msg=%s\n",
+            $threat_id,
+            $detail,
+            $ip,
+            $method,
+            $uri,
+            $category,
+            $overhead_ms,
+            addcslashes($payload_sample, "=\\")
+        );
+    } elseif ($format === 'JSON') {
+        $log_entry = json_encode([
+            'timestamp'  => $timestamp,
+            'threat_id'  => $threat_id,
+            'category'   => $category,
+            'ip'         => $ip,
+            'method'     => $method,
+            'uri'        => $uri,
+            'latency_ms' => $overhead_ms,
+            'detail'     => $detail,
+            'payload'    => $payload_sample,
+            'action'     => $GLOBALS['__VACCINE_MODE']
+        ], JSON_UNESCAPED_SLASHES) . "\n";
+    } else {
+        $log_entry = sprintf(
+            "[%s] [THREAT_INTERCEPTED] ID: %s | CAT: %s | IP: %s | METHOD: %s | URI: %s | LATENCY: %sms | DETAIL: %s | PAYLOAD: %s\n",
+            $timestamp,
+            $threat_id,
+            $category,
+            $ip,
+            $method,
+            $uri,
+            $overhead_ms,
+            $detail,
+            substr(json_encode($matched_payload), 0, 400)
+        );
+    }
+
+    // Direct Syslog dispatch if enabled
+    if (!empty($GLOBALS['__VACCINE_SYSLOG']) && function_exists('syslog')) {
+        @openlog("php-vaccine", LOG_PID | LOG_ODELAY, LOG_AUTH);
+        @syslog(LOG_WARNING, trim($log_entry));
+        @closelog();
+    }
 
     if (is_writable(dirname($GLOBALS['__VACCINE_LOGFILE']))) {
         @file_put_contents($GLOBALS['__VACCINE_LOGFILE'], $log_entry, FILE_APPEND | LOCK_EX);
@@ -75,7 +116,7 @@ function _vaccine_log_threat($threat_id, $category, $detail, $matched_payload) {
         if (!headers_sent()) {
             http_response_code(403);
             header('Content-Type: text/plain; charset=utf-8');
-            header('X-Protected-By: PHP-Universal-Vaccine/1.2');
+            header('X-Protected-By: PHP-Universal-Vaccine/1.3');
         }
         echo "403 Forbidden: Malicious payload intercepted by PHP Runtime Vaccine [Threat ID: " . $threat_id . "]\n";
         exit(1);
@@ -193,5 +234,5 @@ if (!headers_sent() && php_sapi_name() !== 'cli') {
     header('X-Frame-Options: SAMEORIGIN');
     header('X-XSS-Protection: 1; mode=block');
     header('Referrer-Policy: strict-origin-when-cross-origin');
-    header('X-Immunized-By: PHP-Universal-Vaccine/1.2');
+    header('X-Immunized-By: PHP-Universal-Vaccine/1.3');
 }

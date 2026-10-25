@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  web:
+    image: nginx:alpine
+    container_name: vaccine_web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../src/integrations/wordpress/mu-plugins:/var/www/html/wp-content/mu-plugins:ro
+      - web_data:/var/www/html
+    depends_on:
+      - app
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.inoculated
+    container_name: vaccine_app
+    restart: unless-stopped
+    environment:
+      VACCINE_MODE: ENFORCE
+      VACCINE_LOGFILE: /var/log/php-vaccine.log
+      VACCINE_LOG_FORMAT: CEF
+    volumes:
+      - web_data:/var/www/html
+      - vaccine_logs:/var/log
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:10.11
+    container_name: vaccine_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secure_password
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  web_data:
+  vaccine_logs:
+  db_data:

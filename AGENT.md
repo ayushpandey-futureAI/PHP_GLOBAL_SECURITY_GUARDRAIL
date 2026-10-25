@@ -30,10 +30,18 @@ The system neutralizes major vulnerability classes (CGI Argument Injection, Web 
 ├── schema/
 │   ├── php_threat_model.schema.json # JSON Schema for threat taxonomy and rules
 │   └── threat_signatures.json     # Live threat intelligence signatures & test cases
+├── config/
+│   └── snuffleupagus/             # C-extension hardening rule suites (WordPress, Laravel, etc.)
+├── docker/
+│   ├── Dockerfile.inoculated      # Hardened Alpine PHP 8.2-FPM base image
+│   ├── nginx.conf                 # Hardened NGINX reverse proxy with upload denial
+│   └── docker-compose.yml         # Turnkey LAMP/LEMP testing stack
 ├── src/
-│   ├── vaccine.php                # Core runtime serum (auto_prepend_file RASP)
-│   └── shims/
-│       └── mysql_shim.php         # Drop-in legacy mysql_* polyfill for PHP 7 & 8
+│   ├── vaccine.php                # Core runtime serum (auto_prepend_file RASP v1.3)
+│   ├── shims/
+│   │   └── mysql_shim.php         # Drop-in legacy mysql_* polyfill for PHP 7 & 8
+│   └── integrations/
+│       └── wordpress/mu-plugins/  # Zero-touch WordPress Must-Use plugin & dashboard
 ├── scripts/
 │   ├── inoculate.sh               # 1-shot automated installer needle for Linux/UNIX
 │   ├── sync_guardrail.py          # Auto-synchronizer across Local, Drive & GitHub
@@ -42,6 +50,8 @@ The system neutralizes major vulnerability classes (CGI Argument Injection, Web 
 ├── tests/
 │   ├── test_exploit_vectors.py    # 50+ exploit payload battery (100% catch rate)
 │   ├── test_false_positives.py    # CMS & API benign test harness (0% false positives)
+│   ├── test_siem_logging.py       # SIEM / CEF / JSON log format test suite
+│   ├── test_wordpress_mu_plugin_bridge.py # WordPress MU-plugin bridge validator
 │   ├── benchmark_performance.py   # 20k iteration latency benchmark harness
 │   └── test_suite.php             # PHP native exploit simulator
 └── docs/

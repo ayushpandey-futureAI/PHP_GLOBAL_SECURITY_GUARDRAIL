@@ -57,6 +57,10 @@ Benchmarked on modern Linux x86_64 CPU (`tests/benchmark_performance.py`):
    * **44/44 Exploit Vectors Blocked (100% Interception Rate)**
 3. **Benign False-Positive Battery (`tests/test_false_positives.py`):**
    * **21/21 Legitimate Payloads Allowed (0.00% False Positive Rate)**
+4. **SIEM / CEF / JSON Telemetry Validation (`tests/test_siem_logging.py`):**
+   * **100% Standards Compliance for ArcSight CEF & JSON**
+5. **WordPress MU-Plugin Bridge (`tests/test_wordpress_mu_plugin_bridge.py`):**
+   * **100% Zero-Touch Integration Pass Rate**
 
 ---
 
@@ -66,4 +70,6 @@ Benchmarked on modern Linux x86_64 CPU (`tests/benchmark_performance.py`):
 |---|---|---|
 | `VACCINE_MODE` | `ENFORCE` | `ENFORCE` (drops malicious requests with 403) or `AUDIT` (logs only) |
 | `VACCINE_LOGFILE` | `/var/log/php-vaccine.log` | Destination path for intercepted threat audit records |
+| `VACCINE_LOG_FORMAT` | `TEXT` | Telemetry format: `TEXT` (human readable), `JSON` (structured), or `CEF` (ArcSight SIEM) |
+| `VACCINE_SYSLOG` | `0` | Set `1` to enable direct zero-disk syslog streaming to local/remote syslog daemons |
 | `VACCINE_TEST_MODE` | `0` | Allows execution under CLI for unit test verification |

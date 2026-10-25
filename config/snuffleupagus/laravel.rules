@@ -1,0 +1,24 @@
+# ==============================================================================
+# SNUFFLEUPAGUS HARDENED RULES: LARAVEL FRAMEWORK ECOSYSTEM
+# ==============================================================================
+# Tailored for Laravel 8.x - 11.x to protect queues, sessions, and artisan commands.
+# ==============================================================================
+
+# [1] Forbid eval() in Application Runtime
+sp.disable_function.function("eval").drop();
+
+# [2] Shell Command Protection
+sp.disable_function.function("system").drop();
+sp.disable_function.function("shell_exec").drop();
+sp.disable_function.function("passthru").drop();
+
+# [3] Insecure Deserialization Safeguard
+# Laravel applications must sign cookies; any unsanctioned unserialize of gadget chains is dropped
+sp.unserialize.reject_class("Illuminate\\Broadcasting\\PendingBroadcast").drop();
+sp.unserialize.reject_class("Illuminate\\Bus\\QueueingDispatcher").drop();
+sp.unserialize.reject_class("GuzzleHttp\\*").drop();
+sp.unserialize.reject_class("Monolog\\*").drop();
+
+# [4] File Inclusion Safeguards
+sp.disable_function.function("include").param("path").regex("^(?:php|data|phar|expect):\/\/").drop();
+sp.disable_function.function("require").param("path").regex("^(?:php|data|phar|expect):\/\/").drop();

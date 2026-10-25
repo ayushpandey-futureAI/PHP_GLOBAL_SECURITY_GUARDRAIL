@@ -1,0 +1,40 @@
+# ==============================================================================
+# SNUFFLEUPAGUS ENTERPRISE BASELINE SECURITY RULES
+# ==============================================================================
+# Compatibility: PHP 7.4, 8.0, 8.1, 8.2, 8.3, 8.4+
+# Target: Engine-level C-extension enforcement preventing code execution and gadget chains
+# ==============================================================================
+
+# [1] Disable Dangerous Functions Entirely
+sp.disable_function.function("dl").drop();
+sp.disable_function.function("create_function").drop();
+
+# [2] Intercept & Block Arbitrary Runtime String Eval
+sp.disable_function.function("eval").drop();
+
+# [3] Disarm Command Execution Primitives Unless Whitelisted
+sp.disable_function.function("system").drop();
+sp.disable_function.function("shell_exec").drop();
+sp.disable_function.function("passthru").drop();
+sp.disable_function.function("proc_open").drop();
+sp.disable_function.function("popen").drop();
+
+# [4] Neutralize Insecure Deserialization (PHPGGC Gadget Defense)
+# Drop unserialize calls that encounter common gadget chain entry classes
+sp.unserialize.reject_class("Monolog\\*").drop();
+sp.unserialize.reject_class("GuzzleHttp\\*").drop();
+sp.unserialize.reject_class("Illuminate\\*").drop();
+sp.unserialize.reject_class("Symfony\\*").drop();
+sp.unserialize.reject_class("Swift_*").drop();
+
+# [5] Disallow Stream Wrappers in File Operations
+sp.disable_function.function("include").param("path").regex("^php:\/\/").drop();
+sp.disable_function.function("include").param("path").regex("^data:\/\/").drop();
+sp.disable_function.function("include").param("path").regex("^phar:\/\/").drop();
+sp.disable_function.function("require").param("path").regex("^php:\/\/").drop();
+sp.disable_function.function("require").param("path").regex("^data:\/\/").drop();
+sp.disable_function.function("require").param("path").regex("^phar:\/\/").drop();
+sp.disable_function.function("file_get_contents").param("filename").regex("^phar:\/\/").drop();
+
+# [6] Enforce Strict Cookie Encryption & Session Security
+sp.global.strict_cookies.enable();

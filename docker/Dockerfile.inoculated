@@ -1,0 +1,51 @@
+# ==============================================================================
+# PHP UNIVERSAL SECURITY VACCINE - INOCULATED BASE IMAGE
+# ==============================================================================
+# Multi-stage production container with zero-touch ambient RASP, legacy shims,
+# hardened configuration, and automated threat telemetry.
+# ==============================================================================
+
+FROM php:8.2-fpm-alpine
+
+# Install essential build dependencies and extensions
+RUN apk add --no-cache \
+    curl \
+    git \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    libzip-dev \
+    mariadb-client \
+    && docker-php-ext-install -j$(nproc) \
+        mysqli \
+        pdo_mysql \
+        opcache \
+        bcmath
+
+# Deploy the PHP Universal Security Vaccine Serum & Shims
+RUN mkdir -p /etc/php-vaccine/shims /var/log
+COPY src/vaccine.php /etc/php-vaccine/vaccine.php
+COPY src/shims/mysql_shim.php /etc/php-vaccine/shims/mysql_shim.php
+
+# Create dedicated audit log with secure permissions
+RUN touch /var/log/php-vaccine.log && \
+    chmod 666 /var/log/php-vaccine.log
+
+# Inject Ambient Runtime Inoculation in php.ini
+RUN { \
+        echo "auto_prepend_file = /etc/php-vaccine/vaccine.php"; \
+        echo "expose_php = Off"; \
+        echo "allow_url_include = Off"; \
+        echo "allow_url_fopen = On"; \
+        echo "display_errors = Off"; \
+        echo "log_errors = On"; \
+        echo "error_log = /var/log/php_errors.log"; \
+        echo "session.cookie_httponly = 1"; \
+        echo "session.cookie_secure = 1"; \
+        echo "session.use_strict_mode = 1"; \
+    } > /usr/local/etc/php/conf.d/99-php-vaccine-hardened.ini
+
+WORKDIR /var/www/html
+
+EXPOSE 9000
+
+CMD ["php-fpm"]

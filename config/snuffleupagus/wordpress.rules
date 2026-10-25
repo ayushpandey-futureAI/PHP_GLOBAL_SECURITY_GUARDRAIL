@@ -1,0 +1,35 @@
+# ==============================================================================
+# SNUFFLEUPAGUS HARDENED RULES: WORDPRESS ECOSYSTEM
+# ==============================================================================
+# Tailored for WordPress 5.x - 6.x to maintain core compatibility while disarming
+# arbitrary file uploads, deserialization gadget chains, and arbitrary shell execution.
+# ==============================================================================
+
+# [1] Drop Arbitrary Code Execution via eval()
+sp.disable_function.function("eval").drop();
+
+# [2] Disarm Web Shell Command Execution
+sp.disable_function.function("system").drop();
+sp.disable_function.function("shell_exec").drop();
+sp.disable_function.function("passthru").drop();
+sp.disable_function.function("proc_open").drop();
+sp.disable_function.function("popen").drop();
+
+# [3] PHPGGC Deserialization Neutralizer for WordPress
+# WordPress core never requires unserializing external vendor gadget classes
+sp.unserialize.reject_class("Monolog\\Logger").drop();
+sp.unserialize.reject_class("GuzzleHttp\\Psr7\\FnStream").drop();
+sp.unserialize.reject_class("Illuminate\\*").drop();
+sp.unserialize.reject_class("Symfony\\*").drop();
+sp.unserialize.reject_class("Swift_KeyCache_Disk").drop();
+sp.unserialize.reject_class("Requests_Utility_FilteredIterator").drop();
+
+# [4] Disallow Inclusions from Uploads Directory (Web Shell Neutralization)
+sp.disable_function.function("include").param("path").regex("wp-content\/uploads\/.*\\.php$").drop();
+sp.disable_function.function("require").param("path").regex("wp-content\/uploads\/.*\\.php$").drop();
+sp.disable_function.function("include_once").param("path").regex("wp-content\/uploads\/.*\\.php$").drop();
+sp.disable_function.function("require_once").param("path").regex("wp-content\/uploads\/.*\\.php$").drop();
+
+# [5] Disallow Stream Wrappers in WP Inclusions
+sp.disable_function.function("include").param("path").regex("^(?:php|data|phar|expect|zip):\/\/").drop();
+sp.disable_function.function("require").param("path").regex("^(?:php|data|phar|expect|zip):\/\/").drop();
