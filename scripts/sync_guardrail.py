@@ -20,9 +20,9 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-LOCAL_ROOT = Path("/home/ayush-pandey/PHP_GLOBAL_SECURITY_GUARDRAIL")
-RCLONE_BIN = Path("/home/ayush-pandey/.local/bin/rclone")
-GDRIVE_REMOTE = "gdrive:PHP_Global_Security_Guardrail"
+LOCAL_ROOT = Path(__file__).resolve().parent.parent
+RCLONE_BIN = Path(os.environ.get("RCLONE_BIN", "/home/ayush-pandey/.local/bin/rclone"))
+GDRIVE_REMOTE = os.environ.get("GDRIVE_REMOTE", "gdrive:PHP_Global_Security_Guardrail")
 
 def sync_to_gdrive():
     """Syncs local files to Google Drive using direct rclone binary."""

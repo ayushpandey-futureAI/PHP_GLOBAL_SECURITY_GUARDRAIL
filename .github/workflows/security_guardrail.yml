@@ -41,6 +41,30 @@ jobs:
         run: |
           python3 tests/test_wordpress_mu_plugin_bridge.py
 
+      - name: Execute Serverless Bref & Edge Interceptor Test
+        run: |
+          python3 tests/test_serverless_bref.py
+
+      - name: Execute eBPF / XDP Network Simulation Test
+        run: |
+          python3 tests/test_ebpf_simulation.py
+
+      - name: Execute Fleet Console REST API & RBAC Test
+        run: |
+          python3 tests/test_console_api.py
+
+      - name: Execute Compliance Evidence Generator Test
+        run: |
+          python3 tests/test_compliance_generator.py
+
+      - name: Execute Online Tooling & Scanner Verification Test
+        run: |
+          python3 tests/test_online_tools.py
+
+      - name: Execute Sprint 7 Threat Mesh & Packaging Test
+        run: |
+          python3 tests/test_sprint7_and_packaging.py
+
       - name: Execute Microsecond Latency Benchmark
         run: |
           python3 tests/benchmark_performance.py

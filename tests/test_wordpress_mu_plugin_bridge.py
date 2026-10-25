@@ -9,7 +9,8 @@ a local PHP binary, verifying syntax integrity, hooks, and security methods.
 import re
 from pathlib import Path
 
-MU_PLUGIN_FILE = Path("/home/ayush-pandey/PHP_GLOBAL_SECURITY_GUARDRAIL/src/integrations/wordpress/mu-plugins/php-vaccine-guardrail.php")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+MU_PLUGIN_FILE = REPO_ROOT / "src" / "integrations" / "wordpress" / "mu-plugins" / "php-vaccine-guardrail.php"
 
 def test_plugin_headers_and_structure():
     assert MU_PLUGIN_FILE.exists(), f"File {MU_PLUGIN_FILE} not found!"
