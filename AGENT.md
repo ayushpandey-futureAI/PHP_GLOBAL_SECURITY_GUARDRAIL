@@ -26,10 +26,19 @@ The system neutralizes major vulnerability classes (CGI Argument Injection, Web 
 ├── PROJECT_MEMORY.md              # Technical Architecture, Benchmark Data, Threat Matrix
 ├── CONVERSATION_LOGS.md           # Chronological records of decisions & chat interactions
 ├── README.md                      # Public-facing open-source repository documentation
+├── composer.json                  # Packagist standard package definition
+├── LICENSE                        # Apache License 2.0
+├── CONTRIBUTING.md                # Open-source community contribution standards
+├── CODE_OF_CONDUCT.md             # Contributor Covenant v2.1
+├── SECURITY.md                    # Coordinated vulnerability disclosure policy
 ├── .gitignore                     # Standard git ignore definitions
+├── dist/
+│   ├── php-vaccine-guardrail-v1.3.0.zip # Standalone 1-click WordPress plugin
+│   └── SHA256SUMS                 # Cryptographic checksums of release artifacts
 ├── deploy/
 │   ├── ansible/                   # Idempotent fleet inoculation playbook (1000+ nodes)
-│   └── terraform/                 # AWS ASG & launch template IaC with auto-inoculation
+│   ├── terraform/                 # AWS ASG & launch template IaC with auto-inoculation
+│   └── free_cloud/                # Zero-cost Fly.io, Render, and Cloudflare tunnel configs
 ├── .github/
 │   ├── actions/                   # Reusable GitHub Action security gate
 │   └── workflows/                 # CI/CD automated regression pipeline

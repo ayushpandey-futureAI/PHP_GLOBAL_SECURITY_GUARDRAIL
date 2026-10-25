@@ -1,0 +1,15 @@
+# Render Free-Tier Web Service Blueprint
+# Usage: Connect repository to Render.com -> Auto-deploys via Blueprint
+
+services:
+  - type: web
+    name: php-vaccine-console
+    env: docker
+    dockerfilePath: ./docker/Dockerfile.inoculated
+    plan: free
+    region: ohio
+    envVars:
+      - key: VACCINE_MODE
+        value: ENFORCE
+      - key: VACCINE_LOG_FORMAT
+        value: JSON

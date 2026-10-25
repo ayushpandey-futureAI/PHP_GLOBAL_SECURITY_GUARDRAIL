@@ -1,0 +1,24 @@
+# Fly.io Free-Tier Cloud Deployment Configuration
+# Usage: flyctl launch --config deploy/free_cloud/fly.toml
+
+app = "php-vaccine-fleet-console"
+primary_region = "iad"
+
+[build]
+  dockerfile = "../../docker/Dockerfile.inoculated"
+
+[env]
+  VACCINE_MODE = "ENFORCE"
+  VACCINE_LOG_FORMAT = "JSON"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

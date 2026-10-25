@@ -1,0 +1,46 @@
+{
+  "name": "ayushpandey-futureai/php-universal-vaccine",
+  "description": "Zero-Touch Ambient RASP Security Vaccine & Runtime Guardrail for Global PHP Ecosystems",
+  "type": "library",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Ayush Pandey",
+      "homepage": "https://github.com/ayushpandey-futureAI"
+    }
+  ],
+  "homepage": "https://github.com/ayushpandey-futureAI/PHP_GLOBAL_SECURITY_GUARDRAIL",
+  "readme": "README.md",
+  "keywords": [
+    "security",
+    "rasp",
+    "guardrail",
+    "php-security",
+    "cve-2024-4577",
+    "deserialization",
+    "waf",
+    "hardening",
+    "vaccine",
+    "wordpress-security"
+  ],
+  "require": {
+    "php": ">=5.6.0"
+  },
+  "autoload": {
+    "files": [
+      "src/vaccine.php"
+    ],
+    "psr-4": {
+      "PHPVaccine\\": "src/"
+    }
+  },
+  "scripts": {
+    "test": "python3 tests/test_exploit_vectors.py",
+    "validate-schema": "python3 scripts/validate_threat_model.py"
+  },
+  "support": {
+    "issues": "https://github.com/ayushpandey-futureAI/PHP_GLOBAL_SECURITY_GUARDRAIL/issues",
+    "source": "https://github.com/ayushpandey-futureAI/PHP_GLOBAL_SECURITY_GUARDRAIL"
+  },
+  "minimum-stability": "stable"
+}
