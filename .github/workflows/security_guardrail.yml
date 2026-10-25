@@ -1,0 +1,46 @@
+name: "PHP Universal Security Vaccine CI/CD Pipeline"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  validate-guardrail:
+    name: "Threat Schema & Exploit Battery Quality Gate"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate Declarative Threat Schema
+        run: |
+          python3 scripts/validate_threat_model.py
+
+      - name: Execute Exploit Battery (100% Target)
+        run: |
+          python3 tests/test_exploit_vectors.py
+
+      - name: Execute Benign Traffic Suite (0% False Positives)
+        run: |
+          python3 tests/test_false_positives.py
+
+      - name: Execute SIEM CEF & JSON Formatter Test
+        run: |
+          python3 tests/test_siem_logging.py
+
+      - name: Execute WordPress MU-Plugin Bridge Test
+        run: |
+          python3 tests/test_wordpress_mu_plugin_bridge.py
+
+      - name: Execute Microsecond Latency Benchmark
+        run: |
+          python3 tests/benchmark_performance.py

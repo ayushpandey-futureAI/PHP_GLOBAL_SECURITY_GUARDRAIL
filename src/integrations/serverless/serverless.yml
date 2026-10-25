@@ -1,0 +1,32 @@
+service: php-vaccine-serverless
+
+provider:
+  name: aws
+  runtime: provided.al2023
+  region: us-east-1
+  architecture: arm64
+  environment:
+    VACCINE_MODE: ENFORCE
+    VACCINE_LOG_FORMAT: JSON
+
+plugins:
+  - ./vendor/bref/bref
+
+layers:
+  phpVaccineGuardrail:
+    path: ../../
+    name: php-universal-vaccine-layer
+    description: Ambient Zero-Touch RASP Security Layer for PHP Lambda
+    compatibleRuntimes:
+      - provided.al2
+      - provided.al2023
+
+functions:
+  api:
+    handler: index.php
+    description: Inoculated PHP Lambda Web Application
+    layers:
+      - { Ref: PhpVaccineGuardrailLambdaLayer }
+      - ${bref:layer.php-83-fpm}
+    events:
+      - httpApi: '*'

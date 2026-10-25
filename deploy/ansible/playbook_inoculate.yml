@@ -1,0 +1,111 @@
+---
+# ==============================================================================
+# ANSIBLE AUTOMATED FLEET INOCULATION PLAYBOOK
+# ==============================================================================
+# Targets: Ubuntu, Debian, RHEL, CentOS, Rocky Linux, Amazon Linux 2 & 2023
+# Purpose: Zero-downtime, idempotent deployment of PHP Universal Security Vaccine
+# ==============================================================================
+
+- name: Deploy PHP Universal Security Vaccine Across Server Fleet
+  hosts: webservers
+  become: true
+  gather_facts: true
+
+  vars:
+    vaccine_install_dir: "/etc/php-vaccine"
+    vaccine_mode: "ENFORCE"
+    vaccine_log_file: "/var/log/php-vaccine.log"
+
+  tasks:
+    - name: Create dedicated vaccine installation and log directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - "{{ vaccine_install_dir }}"
+        - "{{ vaccine_install_dir }}/shims"
+
+    - name: Deploy Core RASP Serum (vaccine.php)
+      ansible.builtin.copy:
+        src: "../../src/vaccine.php"
+        dest: "{{ vaccine_install_dir }}/vaccine.php"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Deploy Legacy MySQL Polyfill Shim (mysql_shim.php)
+      ansible.builtin.copy:
+        src: "../../src/shims/mysql_shim.php"
+        dest: "{{ vaccine_install_dir }}/shims/mysql_shim.php"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Create Audit Log Destination
+      ansible.builtin.file:
+        path: "{{ vaccine_log_file }}"
+        state: touch
+        owner: www-data
+        group: www-data
+        mode: '0664'
+      ignore_errors: true
+
+    - name: Discover all active php.ini files across target system
+      ansible.builtin.command: find /etc/php* /usr/local/etc -name "php.ini" -type f
+      register: php_ini_discovery
+      changed_when: false
+      failed_when: false
+
+    - name: Configure auto_prepend_file in all discovered php.ini files
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        regexp: '^;?auto_prepend_file\s*='
+        line: "auto_prepend_file = {{ vaccine_install_dir }}/vaccine.php"
+        state: present
+      loop: "{{ php_ini_discovery.stdout_lines | default([]) }}"
+      when: php_ini_discovery.stdout_lines is defined
+
+    - name: Enforce php.ini Core Hardening Directives
+      ansible.builtin.lineinfile:
+        path: "{{ item.0 }}"
+        regexp: "{{ item.1.regexp }}"
+        line: "{{ item.1.line }}"
+        state: present
+      loop: "{{ (php_ini_discovery.stdout_lines | default([])) | product([
+          {'regexp': '^;?expose_php\\s*=', 'line': 'expose_php = Off'},
+          {'regexp': '^;?allow_url_include\\s*=', 'line': 'allow_url_include = Off'}
+        ]) | list }}"
+      when: php_ini_discovery.stdout_lines is defined
+
+    - name: Deploy NGINX Layer 4 Upload Execution Lockdown Rule
+      ansible.builtin.copy:
+        content: |
+          # Layer 4 Defense: Deny direct execution of scripts in upload directories
+          location ~* /(?:uploads|files|wp-content/uploads|media|storage)/.*\.php$ {
+              deny all;
+              return 404;
+          }
+        dest: "/etc/nginx/conf.d/php_vaccine_uploads.conf"
+        owner: root
+        group: root
+        mode: '0644'
+      when: ansible_facts['services']['nginx.service'] is defined or ansible_facts['services']['nginx'] is defined
+      notify: Reload Web Servers
+
+    - name: Verify Web Server Configuration Syntax
+      ansible.builtin.command: nginx -t
+      changed_when: false
+      when: ansible_facts['services']['nginx.service'] is defined or ansible_facts['services']['nginx'] is defined
+
+  handlers:
+    - name: Reload Web Servers
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: reloaded
+      loop:
+        - nginx
+        - php-fpm
+      ignore_errors: true

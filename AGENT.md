@@ -27,6 +27,12 @@ The system neutralizes major vulnerability classes (CGI Argument Injection, Web 
 ├── CONVERSATION_LOGS.md           # Chronological records of decisions & chat interactions
 ├── README.md                      # Public-facing open-source repository documentation
 ├── .gitignore                     # Standard git ignore definitions
+├── deploy/
+│   ├── ansible/                   # Idempotent fleet inoculation playbook (1000+ nodes)
+│   └── terraform/                 # AWS ASG & launch template IaC with auto-inoculation
+├── .github/
+│   ├── actions/                   # Reusable GitHub Action security gate
+│   └── workflows/                 # CI/CD automated regression pipeline
 ├── schema/
 │   ├── php_threat_model.schema.json # JSON Schema for threat taxonomy and rules
 │   └── threat_signatures.json     # Live threat intelligence signatures & test cases
@@ -40,22 +46,35 @@ The system neutralizes major vulnerability classes (CGI Argument Injection, Web 
 │   ├── vaccine.php                # Core runtime serum (auto_prepend_file RASP v1.3)
 │   ├── shims/
 │   │   └── mysql_shim.php         # Drop-in legacy mysql_* polyfill for PHP 7 & 8
+│   ├── console/                   # Central fleet management control plane & RBAC
 │   └── integrations/
-│       └── wordpress/mu-plugins/  # Zero-touch WordPress Must-Use plugin & dashboard
+│       ├── wordpress/mu-plugins/  # Zero-touch WordPress Must-Use plugin & dashboard
+│       ├── serverless/            # AWS Lambda & Bref middleware wrapper
+│       └── edge/                  # Cloudflare Worker & Fastly Wasm pre-filters
 ├── scripts/
 │   ├── inoculate.sh               # 1-shot automated installer needle for Linux/UNIX
 │   ├── sync_guardrail.py          # Auto-synchronizer across Local, Drive & GitHub
 │   ├── validate_threat_model.py   # Schema compliance & signature test runner
-│   └── threat_intelligence_engine.py # 30-year threat analyzer & report generator
+│   ├── generate_compliance_report.py # Automated PCI-DSS, SOC 2, HIPAA evidence compiler
+│   ├── ebpf/                      # Linux Kernel XDP packet pre-filter and loader
+│   └── threat_intelligence/       # Autonomous CVE synthesizer & EPSS calibrator
 ├── tests/
 │   ├── test_exploit_vectors.py    # 50+ exploit payload battery (100% catch rate)
 │   ├── test_false_positives.py    # CMS & API benign test harness (0% false positives)
 │   ├── test_siem_logging.py       # SIEM / CEF / JSON log format test suite
 │   ├── test_wordpress_mu_plugin_bridge.py # WordPress MU-plugin bridge validator
+│   ├── test_ebpf_simulation.py    # eBPF packet inspection simulation test
+│   ├── test_serverless_bref.py    # AWS Lambda event wrapper test
+│   ├── test_console_api.py        # Central fleet console REST API test
+│   ├── test_compliance_generator.py # Regulatory compliance evidence verification
+│   ├── fuzzing/                   # Continuous autonomous ReDoS fuzzing battery
 │   ├── benchmark_performance.py   # 20k iteration latency benchmark harness
 │   └── test_suite.php             # PHP native exploit simulator
 └── docs/
-    ├── ARCHITECTURE.md            # Detailed engineering specification
+    ├── ARCHITECTURE.md            # Overview engineering specification
+    ├── TECHNICAL_SPECIFICATION.md # Deep 8-section architecture & RASP internals
+    ├── BUSINESS_OPERATIONS.md     # Enterprise ops, SLAs, TCO, SOPs & incident escalation
+    ├── compliance/                # PCI-DSS 4.0, SOC 2 Type II audit attestations
     └── reports/
         └── THREAT_INTELLIGENCE_REPORT.md # 30-Year Threat Analysis Report
 ```

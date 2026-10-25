@@ -1,0 +1,42 @@
+name: 'PHP Universal Security Vaccine CI/CD Gate'
+description: 'Validates PHP applications against CVEs, deserialization bombs, and verifies threat model schema compliance'
+author: 'Ayush Pandey (ayushpandey-futureAI)'
+branding:
+  icon: 'shield'
+  color: 'green'
+
+inputs:
+  python_version:
+    description: 'Python runtime version for test harnesses'
+    required: false
+    default: '3.11'
+  fail_on_threat:
+    description: 'Fail CI pipeline if exploit bypass is discovered'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python Environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python_version }}
+
+    - name: Run Declarative Threat Model Schema Validator
+      shell: bash
+      run: |
+        echo "[+] Executing Threat Model Schema Compliance Test..."
+        python3 ${{ github.action_path }}/../../../scripts/validate_threat_model.py
+
+    - name: Run 50+ Exploit Battery Runner
+      shell: bash
+      run: |
+        echo "[+] Executing Exploit Interception Battery..."
+        python3 ${{ github.action_path }}/../../../tests/test_exploit_vectors.py
+
+    - name: Run Benign Traffic False-Positive Suite
+      shell: bash
+      run: |
+        echo "[+] Validating CMS & API Benign Traffic Pass Rate..."
+        python3 ${{ github.action_path }}/../../../tests/test_false_positives.py
