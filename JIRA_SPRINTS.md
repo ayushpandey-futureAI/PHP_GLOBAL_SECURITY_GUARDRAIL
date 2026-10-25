@@ -18,7 +18,9 @@
 | **VACCINE-EPIC-05** | CMS Polyfill & Legacy MySQL Shim Layer | v1.2.0-Legacy | **COMPLETED** |
 | **VACCINE-EPIC-06** | Declarative Threat Model Schema & Betterment Engine | v1.2.0-Schema | **COMPLETED** |
 | **VACCINE-EPIC-07** | Kernel, Snuffleupagus, CMS MU-Plugin & SIEM Integration | v1.3.0-Kernel | **COMPLETED** |
-| **VACCINE-EPIC-08** | eBPF Kernel Network Probes & Automated Cloud Inoculator | v2.0.0-Cloud | **BACKLOG** |
+| **VACCINE-EPIC-08** | eBPF Kernel Network Probes & Cloud Serverless Layer | v2.0.0-Cloud | **PLANNED** |
+| **VACCINE-EPIC-09** | Autonomous Threat Synthesizer & Dynamic EPSS Engine | v2.1.0-AI | **BACKLOG** |
+| **VACCINE-EPIC-10** | Central Fleet Governance Console & Compliance Auditor | v2.2.0-Enterprise | **BACKLOG** |
 
 ---
 
@@ -142,8 +144,89 @@
 
 ---
 
-## 📦 SPRINT 4: EBPF KERNEL PROBES & CLOUD AUTOMATION (BACKLOG)
+## 🏃 SPRINT 4: EBPF KERNEL PROBES & CLOUD AUTOMATION (PLANNED / NEXT)
+**Sprint Duration:** 2026-10-27 to 2026-11-10  
+**Sprint Goal:** Extend protection to Linux kernel eBPF packet boundaries, serverless PHP runtimes (AWS Lambda/Bref), and provide turnkey Ansible/Terraform fleet deployment automation.
 
-* **[VACCINE-401] eBPF Zero-Overhead Network Packet Interceptor:** Linux eBPF probe inspecting HTTP payload boundaries prior to socket delivery.
-* **[VACCINE-402] Automated AWS Lambda & Cloudflare Worker Shim:** Ambient edge wrapper for serverless PHP runtimes (Bref).
-* **[VACCINE-403] Automated GitHub Action CI/CD Inoculation Gate:** Automated lint and vaccine assertion check for pull requests.
+### 📋 Sprint 4 Tickets
+
+#### [VACCINE-401] Linux eBPF Zero-Overhead HTTP Payload Interceptor
+* **Type:** Spike / Story | **Points:** 8 | **Priority:** High | **Status:** `TO DO`
+* **Assignee:** Ayush Pandey
+* **Description:** Implement Linux XDP/eBPF kernel probe (`scripts/ebpf/vaccine_xdp.c`) to inspect raw socket TCP stream boundaries before userspace context switches.
+* **Acceptance Criteria:**
+  - [ ] Drops known CGI argument injection patterns (`-d allow_url_include`) directly at the kernel ring buffer.
+  - [ ] Interception overhead strictly under **2.0 µs**.
+  - [ ] Gracefully falls back to userspace `vaccine.php` if eBPF is unsupported by target kernel.
+
+#### [VACCINE-402] AWS Lambda & Bref Serverless Runtime Layer
+* **Type:** Story | **Points:** 5 | **Priority:** Medium | **Status:** `TO DO`
+* **Assignee:** Ayush Pandey
+* **Description:** Package `vaccine.php` as a standalone AWS Lambda Layer (`arn:aws:lambda:*:*:layer:php-universal-vaccine`) injecting via `bref/bref` bootstrap.
+* **Acceptance Criteria:**
+  - [ ] Zero-touch deployment via `serverless.yml` or AWS SAM template.
+  - [ ] Automatically intercepts API Gateway and ALB event payloads.
+
+#### [VACCINE-403] Cloudflare Workers & Fastly Compute Wasm Pre-Filter Shim
+* **Type:** Story | **Points:** 5 | **Priority:** Medium | **Status:** `TO DO`
+* **Assignee:** Ayush Pandey
+* **Description:** Compile the regex detection engine into WebAssembly (Wasm) for execution at the CDN edge before requests reach origin PHP clusters.
+* **Acceptance Criteria:**
+  - [ ] Rust/Wasm module matching `schema/threat_signatures.json`.
+  - [ ] Cloudflare Worker template deployed to Edge network.
+
+#### [VACCINE-404] Fleet Rollout Automation via Ansible & Terraform
+* **Type:** Task | **Points:** 5 | **Priority:** High | **Status:** `TO DO`
+* **Assignee:** Ayush Pandey
+* **Description:** Provide production Infrastructure-as-Code modules for instant enterprise deployment across thousands of nodes.
+* **Acceptance Criteria:**
+  - [ ] `deploy/ansible/playbook_inoculate.yml` capable of targeting 1,000+ servers in parallel.
+  - [ ] `deploy/terraform/modules/aws_inoculated_instance` configuring launch templates.
+
+#### [VACCINE-405] Automated GitHub Action CI/CD Inoculation Gate
+* **Type:** Task | **Points:** 3 | **Priority:** Medium | **Status:** `TO DO`
+* **Assignee:** Ayush Pandey
+* **Description:** Build reusable GitHub Action (`ayushpandey-futureAI/php-vaccine-action@v1`) ensuring pull requests comply with threat schema and benign traffic tests.
+* **Acceptance Criteria:**
+  - [ ] Runs schema validation and 44-exploit regression suite on every PR.
+  - [ ] Blocks PR merges if any regression or false positive is introduced.
+
+---
+
+## 🏃 SPRINT 5: AUTONOMOUS THREAT INTELLIGENCE & DYNAMIC EPSS (BACKLOG)
+**Target Milestone:** v2.1.0-AI  
+**Sprint Goal:** Build automated ingestion pipelines consuming live CVE and CISA KEV feeds to autonomously update threat schemas without human intervention.
+
+### 📋 Sprint 5 Tickets
+
+#### [VACCINE-501] Autonomous NVD & CISA KEV Threat Ingestion Pipeline
+* **Type:** Story | **Points:** 8 | **Priority:** High | **Status:** `BACKLOG`
+* **Description:** Continuous pipeline ingesting newly disclosed PHP CVEs, parsing exploit patterns, and formulating draft signatures in `schema/threat_signatures.json`.
+
+#### [VACCINE-502] Dynamic EPSS & CVSS v4.0 Risk Calibration Engine
+* **Type:** Task | **Points:** 5 | **Priority:** Medium | **Status:** `BACKLOG`
+* **Description:** Update signature severity and logging thresholds dynamically based on real-time FIRST.org EPSS exploit probability scores.
+
+#### [VACCINE-503] Autonomous Continuous Fuzzing Battery (AFL++ / LibFuzzer)
+* **Type:** Task | **Points:** 5 | **Priority:** Medium | **Status:** `BACKLOG`
+* **Description:** Continuous fuzzing against `vaccine.php` regexes to detect ReDoS (Regular Expression Denial of Service) and parser differential bypasses.
+
+---
+
+## 🏃 SPRINT 6: ENTERPRISE GOVERNANCE, RBAC & COMPLIANCE AUDITOR (BACKLOG)
+**Target Milestone:** v2.2.0-Enterprise  
+**Sprint Goal:** Centralized SaaS/On-Prem management console for enterprise fleet observability, RBAC, and automated regulatory audit evidence generation.
+
+### 📋 Sprint 6 Tickets
+
+#### [VACCINE-601] Centralized Multi-Tenant Fleet Management Console
+* **Type:** Epic / Story | **Points:** 13 | **Priority:** High | **Status:** `BACKLOG`
+* **Description:** Web-based control plane aggregating heartbeats, incident counts, and fleet status across heterogeneous cloud and bare-metal environments.
+
+#### [VACCINE-602] Enterprise SAML 2.0 / OIDC SSO & RBAC Integration
+* **Type:** Story | **Points:** 5 | **Priority:** Medium | **Status:** `BACKLOG`
+* **Description:** Support enterprise identity providers (Okta, Azure AD / Microsoft Entra, PingIdentity) for dashboard access.
+
+#### [VACCINE-603] Automated Regulatory Compliance PDF Evidence Generator
+* **Type:** Task | **Points:** 5 | **Priority:** High | **Status:** `BACKLOG`
+* **Description:** One-click compliance report generation verifying PCI-DSS 4.0 Requirement 6.4.2, SOC 2 Type II, and HIPAA compliance with cryptographic proof.
