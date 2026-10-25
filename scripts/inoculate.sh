@@ -12,8 +12,10 @@ set -euo pipefail
 
 VACCINE_DIR="/etc/php-vaccine"
 VACCINE_LOG="/var/log/php-vaccine.log"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || echo "")"
 SOURCE_SERUM="${SCRIPT_DIR}/../src/vaccine.php"
+SOURCE_SHIM="${SCRIPT_DIR}/../src/shims/mysql_shim.php"
+GITHUB_RAW_BASE="https://raw.githubusercontent.com/ayushpandey-futureAI/PHP_GLOBAL_SECURITY_GUARDRAIL/main"
 
 # Color Codes
 GREEN='\033[0;32m'
@@ -33,25 +35,40 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 MODE="ENFORCE"
-if [[ "${1:-}" == "--audit-only" ]]; then
-    MODE="AUDIT"
-    echo -e "${YELLOW}[!] Running in AUDIT ONLY mode (Logging threats without blocking 403).${NC}"
-fi
+AUTO_PATCH=0
+for arg in "$@"; do
+    if [[ "${arg}" == "--audit-only" ]]; then
+        MODE="AUDIT"
+        echo -e "${YELLOW}[!] Running in AUDIT ONLY mode (Logging threats without blocking 403).${NC}"
+    elif [[ "${arg}" == "--auto-patch" ]]; then
+        AUTO_PATCH=1
+        echo -e "${GREEN}[+] Online Auto-Patching daemon scheduled for installation.${NC}"
+    fi
+done
 
-# Step 1: Install Vaccine Core Files
-echo -e "${CYAN}[1/5] Deploying Vaccine Core Serum to ${VACCINE_DIR}...${NC}"
-mkdir -p "${VACCINE_DIR}"
+# Step 1: Install Vaccine Core Files and Shims
+echo -e "${CYAN}[1/5] Deploying Vaccine Core Serum & Shims to ${VACCINE_DIR}...${NC}"
+mkdir -p "${VACCINE_DIR}/shims"
 touch "${VACCINE_LOG}"
 chmod 0666 "${VACCINE_LOG}"
 
 if [ -f "${SOURCE_SERUM}" ]; then
     cp "${SOURCE_SERUM}" "${VACCINE_DIR}/vaccine.php"
+    if [ -f "${SOURCE_SHIM}" ]; then
+        cp "${SOURCE_SHIM}" "${VACCINE_DIR}/shims/mysql_shim.php"
+    fi
 else
-    echo -e "${RED}[ERROR] Source serum not found at ${SOURCE_SERUM}${NC}"
-    exit 1
+    echo -e "${YELLOW}[i] Local source serum not found. Pulling latest release online from GitHub...${NC}"
+    curl -sSL "${GITHUB_RAW_BASE}/src/vaccine.php" -o "${VACCINE_DIR}/vaccine.php"
+    curl -sSL "${GITHUB_RAW_BASE}/src/shims/mysql_shim.php" -o "${VACCINE_DIR}/shims/mysql_shim.php" 2>/dev/null || true
 fi
+
 chmod 0644 "${VACCINE_DIR}/vaccine.php"
+if [ -f "${VACCINE_DIR}/shims/mysql_shim.php" ]; then
+    chmod 0644 "${VACCINE_DIR}/shims/mysql_shim.php"
+fi
 echo -e "${GREEN}      -> Core serum active at ${VACCINE_DIR}/vaccine.php${NC}"
+echo -e "${GREEN}      -> Legacy MySQL shim active at ${VACCINE_DIR}/shims/mysql_shim.php${NC}"
 
 # Step 2: Inoculate All PHP Engines Across Installed Versions
 echo -e "${CYAN}[2/5] Scanning and Inoculating PHP Configuration (php.ini)...${NC}"
@@ -114,6 +131,30 @@ if command -v systemctl >/dev/null 2>&1; then
         echo "      -> Reloading HTTPD..."
         systemctl reload httpd 2>/dev/null || true
     fi
+fi
+
+# Step 4b: Online Auto-Patching Daemon & Cron Setup (if requested)
+if [ "${AUTO_PATCH}" -eq 1 ]; then
+    echo -e "${CYAN}[+] Installing Automated Online Continuous Security Patcher...${NC}"
+    CRON_FILE="/etc/cron.daily/php-vaccine-auto-patch"
+    cat << 'EOF' > "${CRON_FILE}"
+#!/usr/bin/env bash
+# Automated Continuous Security Patcher for PHP Universal Vaccine
+set -euo pipefail
+VACCINE_URL="https://raw.githubusercontent.com/ayushpandey-futureAI/PHP_GLOBAL_SECURITY_GUARDRAIL/main/src/vaccine.php"
+TARGET="/etc/php-vaccine/vaccine.php"
+TMP="/tmp/vaccine_patch_check.php"
+
+if curl -sSL "${VACCINE_URL}" -o "${TMP}"; then
+    if [ -s "${TMP}" ]; then
+        mv "${TMP}" "${TARGET}"
+        chmod 0644 "${TARGET}"
+        echo "[$(date -u)] [AUTO_PATCH_SUCCESS] Updated ${TARGET} to latest online release" >> /var/log/php-vaccine-patcher.log
+    fi
+fi
+EOF
+    chmod +x "${CRON_FILE}"
+    echo -e "${GREEN}      -> Daily auto-patcher installed at ${CRON_FILE}${NC}"
 fi
 
 # Step 5: Self-Verification

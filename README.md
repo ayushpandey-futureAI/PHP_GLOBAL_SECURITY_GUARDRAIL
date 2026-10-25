@@ -48,17 +48,37 @@ flowchart TD
 
 ---
 
-## 🚀 Quick Start (1-Shot Inoculation)
+## 🚀 Quick Start: 1-Shot Online Inoculation (Zero Git Clone Required)
 
-Inoculate your entire Linux server (all active PHP versions and web servers) with a single command:
+Inoculate any Linux server across all active PHP versions (5.6 - 8.4+) and web servers (NGINX, Apache, LiteSpeed) directly over the internet:
 
 ```bash
-git clone https://github.com/ayushpandey-futureAI/PHP_GLOBAL_SECURITY_GUARDRAIL.git
-cd PHP_GLOBAL_SECURITY_GUARDRAIL
-sudo bash scripts/inoculate.sh
+# 1-Line Universal Online Inoculator
+curl -sSL https://raw.githubusercontent.com/ayushpandey-futureAI/PHP_GLOBAL_SECURITY_GUARDRAIL/main/scripts/inoculate.sh | sudo bash
 ```
 
-### Audit-Only Mode (Testing / Staging)
+### 🔄 Continuous Online Auto-Patching (Zero-Day Protection)
+To automatically receive dynamic threat signature updates and CVE hot-patches daily without server restarts:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/ayushpandey-futureAI/PHP_GLOBAL_SECURITY_GUARDRAIL/main/scripts/inoculate.sh | sudo bash -s -- --auto-patch
+```
+
+### 🔍 Live Remote Security & Immunization Scanner
+Remotely test any live domain for PHP vulnerabilities and check if the vaccine is active:
+
+```bash
+python3 scripts/online_scanner.py https://your-website.com
+```
+
+### 🖥️ Central Fleet Management Web Console
+Launch the central fleet telemetry dashboard and REST API online:
+
+```bash
+bash scripts/serve_console.sh --port 8080
+```
+
+### 🧪 Audit-Only Mode (Testing / Staging)
 To log threats to `/var/log/php-vaccine.log` without dropping traffic (HTTP 403):
 ```bash
 sudo bash scripts/inoculate.sh --audit-only
